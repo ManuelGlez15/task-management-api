@@ -13,9 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -35,9 +36,14 @@ public class TaskController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String priority,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate) {
-        Page<Task> taskPage = taskService.getAllTasks(
-                PageRequest.of(page, size), status, priority, dueDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String sortDirection) {
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy != null && !sortBy.isEmpty() ? sortBy : "id");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Task> taskPage = taskService.getAllTasks(pageable, status, priority, dueDate);
         return new ResponseEntity<>(taskPage, HttpStatus.OK);
     }
 
