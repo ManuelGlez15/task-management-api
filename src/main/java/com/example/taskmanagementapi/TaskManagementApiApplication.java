@@ -10,10 +10,9 @@ public class TaskManagementApiApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.load();
 
-        //String databaseUrl = dotenv.get("DATABASE_URL");
-        //String databaseUsername = dotenv.get("DATABASE_USERNAME");
-        //String databasePassword = dotenv.get("DATABASE_PASSWORD");
-        //System.out.println("Database URL: " + databaseUrl);
+        System.setProperty("DATABASE_URL", dotenv.get("DATABASE_URL"));
+        System.setProperty("DATABASE_USERNAME", dotenv.get("DATABASE_USERNAME"));
+        System.setProperty("DATABASE_PASSWORD", dotenv.get("DATABASE_PASSWORD"));
 
         SpringApplication.run(TaskManagementApiApplication.class, args);
     }
