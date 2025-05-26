@@ -2,46 +2,63 @@ package com.example.taskmanagementapi.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final UserDetailsService userDetailsService;
+
+    public SecurityConfig(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf((csrf) -> csrf.disable()) // Deshabilitar CSRF para pruebas de API
-                .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/", "/error").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/").hasRole("Usuario")
+                        .requestMatchers(HttpMethod.GET, "/{id:\\d+}").hasRole("Usuario")
+                        .requestMatchers(HttpMethod.PUT, "/{id:\\d+}").hasRole("Usuario")
+                        .requestMatchers(HttpMethod.DELETE, "/{id:\\d+}").hasRole("Usuario")
+                        .requestMatchers("/admin/**").hasRole("Root")
+                        .requestMatchers("/profile/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .httpBasic();
+                .httpBasic(withDefaults()) // Habilita HTTP Basic con la configuración por defecto
+                .authenticationProvider(authenticationProvider()); // Registra el AuthenticationProvider
         return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user =
-                User.withDefaultPasswordEncoder()
-                        .username("user")
-                        .password("password")
-                        .roles("USER")
-                        .build();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-        UserDetails admin =
-                User.withDefaultPasswordEncoder()
-                        .username("admin")
-                        .password("admin")
-                        .roles("ADMIN")
-                        .build();
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 
-        return new InMemoryUserDetailsManager(user, admin);
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
