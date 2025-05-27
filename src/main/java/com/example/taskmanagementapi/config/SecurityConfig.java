@@ -28,19 +28,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/").hasRole("Usuario")
-                        .requestMatchers(HttpMethod.GET, "/{id:\\d+}").hasRole("Usuario")
-                        .requestMatchers(HttpMethod.PUT, "/{id:\\d+}").hasRole("Usuario")
-                        .requestMatchers(HttpMethod.DELETE, "/{id:\\d+}").hasRole("Usuario")
-                        .requestMatchers("/admin/**").hasRole("Root")
-                        .requestMatchers("/profile/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(withDefaults()) // Habilita HTTP Basic con la configuración por defecto
-                .authenticationProvider(authenticationProvider()); // Registra el AuthenticationProvider
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/").authenticated()
+                .requestMatchers(HttpMethod.GET, "/{id:\\d+}").hasRole("Usuario")
+                .requestMatchers(HttpMethod.PUT, "/{id:\\d+}").hasRole("Usuario")
+                .requestMatchers(HttpMethod.DELETE, "/{id:\\d+}").hasRole("Usuario")
+                .requestMatchers("/admin/**").hasRole("Root")
+                .requestMatchers("/profile/**").authenticated()
+                .anyRequest().authenticated()
+            )
+            .httpBasic(withDefaults())
+            .authenticationProvider(authenticationProvider());
         return http.build();
     }
 
